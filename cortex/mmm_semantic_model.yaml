@@ -1,0 +1,66 @@
+name: mmm_roi_model
+description: Semantic model for Global B2B Marketing Mix Modeling and ROI analysis.
+tables:
+  - name: weekly_performance
+    description: Weekly aggregated marketing spend, revenue, and market signals.
+    base_table:
+      database: "{{PROJECT_PREFIX}}"
+      schema: MMM
+      table: V_MMM_INPUT_WEEKLY
+    dimensions:
+      - name: channel
+        description: Marketing channel (e.g., LinkedIn, Google Ads).
+        expr: channel
+      - name: week
+        description: Fiscal week start date.
+        expr: week_start
+    measures:
+      - name: spend
+        description: Total marketing spend in USD.
+        expr: spend
+        aggregation: sum
+      - name: revenue
+        description: Total attributed revenue in USD.
+        expr: revenue
+        aggregation: sum
+      - name: impressions
+        description: Total ad impressions.
+        expr: impressions
+        aggregation: sum
+      - name: clicks
+        description: Total ad clicks.
+        expr: clicks
+        aggregation: sum
+      - name: avg_pmi
+        description: Average Purchasing Managers Index (Market Signal).
+        expr: avg_pmi
+        aggregation: avg
+      - name: avg_sov
+        description: Average Competitor Share of Voice.
+        expr: avg_sov
+        aggregation: avg
+
+  - name: channel_roi
+    description: ROI and performance metrics by channel.
+    base_table:
+      database: "{{PROJECT_PREFIX}}"
+      schema: MMM
+      table: V_ROI_BY_CHANNEL
+    dimensions:
+      - name: channel
+        description: Marketing channel.
+        expr: channel
+    measures:
+      - name: total_spend
+        description: Total historical spend.
+        expr: total_spend
+        aggregation: sum
+      - name: attributed_revenue
+        description: Total revenue attributed to the channel.
+        expr: attributed_revenue
+        aggregation: sum
+      - name: roas
+        description: Return on Ad Spend (Revenue / Spend).
+        expr: roas
+        aggregation: avg # Pre-calculated ratio, so average is approximation for aggregations
+
