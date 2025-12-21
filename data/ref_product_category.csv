@@ -1,0 +1,39 @@
+PRODUCT_CATEGORY_CODE,CATEGORY_NAME,CATEGORY_DESCRIPTION,PARENT_CATEGORY_CODE,CATEGORY_LEVEL
+SI,Safety & Industrial,Safety and industrial products business segment,,1
+TE,Transportation & Electronics,Transportation and electronics business segment,,1
+HC,Healthcare,Healthcare and medical products business segment,,1
+CN,Consumer,Consumer products business segment,,1
+SI_ABS,Abrasives & Surface,Surface preparation and finishing division,SI,2
+SI_ADH,Adhesives & Tapes,Bonding and joining solutions division,SI,2
+SI_SAF,Safety Solutions,Personal protection and safety division,SI,2
+SI_IND,Industrial Products,Tools and industrial consumables division,SI,2
+SI_BLD,Building & Construction,Construction materials and solutions division,SI,2
+TE_AUT,Automotive,Automotive OEM and aftermarket division,TE,2
+TE_ELC,Electronics,Electronics materials and components division,TE,2
+TE_DSP,Display & Graphics,Display materials and graphics division,TE,2
+HC_MED,Medical Solutions,Medical devices and supplies division,HC,2
+CN_HOM,Consumer Home,Home and consumer products division,CN,2
+SI_ABS_ABR,Abrasives,"Grinding, cutting, sanding, and polishing products",SI_ABS,3
+SI_ABS_CMP,Compounds & Polishes,Surface finishing compounds and polishes,SI_ABS,3
+SI_ABS_COA,Coatings,Protective and decorative coatings,SI_ABS,3
+SI_ADH_ASF,Adhesives Sealants & Fillers,Industrial adhesives bonding sealants and fillers,SI_ADH,3
+SI_ADH_TAP,Tapes,Industrial and specialty tapes,SI_ADH,3
+SI_ADH_FLM,Films & Sheeting,Protective films and sheeting materials,SI_ADH,3
+SI_SAF_PPE,Personal Protective Equipment,Respirators safety glasses hearing protection,SI_SAF,3
+SI_SAF_FIL,Filtration & Separation,Industrial filtration and separation products,SI_SAF,3
+SI_IND_TOL,Tools & Equipment,Hand tools power tool accessories,SI_IND,3
+SI_IND_LUB,Lubricants,Industrial lubricants and greases,SI_IND,3
+SI_IND_CLN,Cleaning Supplies,Industrial cleaning products and solutions,SI_IND,3
+SI_BLD_BLM,Building Materials,Construction and building materials,SI_BLD,3
+SI_BLD_INS,Insulation,Thermal and acoustic insulation products,SI_BLD,3
+SI_BLD_SGN,Signage & Marking,Safety signage and floor marking,SI_BLD,3
+TE_AUT_APH,Automotive Parts & Hardware,OEM and aftermarket automotive components,TE_AUT,3
+TE_AUT_ADV,Advanced Materials,High-performance materials for automotive,TE_AUT,3
+TE_ELC_EMC,Electronics Materials & Components,Electronic interconnects and materials,TE_ELC,3
+TE_ELC_ELE,Electrical,Electrical tapes connectors and products,TE_ELC,3
+TE_DSP_LBL,Labels,Industrial labels and marking solutions,TE_DSP,3
+HC_MED_MED,Medical,Medical devices and healthcare products,HC_MED,3
+HC_MED_LAB,Lab Supplies & Testing,Laboratory supplies and testing equipment,HC_MED,3
+CN_HOM_HOM,Home,Consumer home products,CN_HOM,3
+CN_HOM_OFF,Office Supplies,Office and school supplies,CN_HOM,3
+

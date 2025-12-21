@@ -1,0 +1,11 @@
+name: mmm_roi_env
+channels:
+  - snowflake
+dependencies:
+  - streamlit
+  - pandas
+  - numpy
+  - plotly
+  - pydeck
+  - snowflake-snowpark-python
+
