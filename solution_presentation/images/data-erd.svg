@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="800" height="500" viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+<rect x="0" y="0" width="800" height="500" fill="#ffffff" stroke="none" stroke-width="1" rx="0" ry="0" opacity="1.0" />
+<rect x="50" y="50" width="200" height="30" fill="#2980b9" stroke="none" stroke-width="1" rx="0" ry="0" opacity="1.0" />
+<text x="60" y="70" dy="0" font-family="Arial, sans-serif" font-size="14" fill="white" text-anchor="start" font-weight="bold">MEDIA_SPEND_DAILY</text>
+<rect x="50" y="80" width="200" height="90" fill="#ecf0f1" stroke="#2980b9" stroke-width="2" rx="0" ry="0" opacity="1.0" />
+<text x="60" y="100" dy="0" font-family="monospace" font-size="11" fill="#333" text-anchor="start" font-weight="normal">date</text>
+<text x="60" y="118" dy="0" font-family="monospace" font-size="11" fill="#333" text-anchor="start" font-weight="normal">channel_id</text>
+<text x="60" y="136" dy="0" font-family="monospace" font-size="11" fill="#333" text-anchor="start" font-weight="normal">campaign_id</text>
+<text x="60" y="154" dy="0" font-family="monospace" font-size="11" fill="#333" text-anchor="start" font-weight="normal">spend_amount</text>
+<text x="60" y="172" dy="0" font-family="monospace" font-size="11" fill="#333" text-anchor="start" font-weight="normal">impressions</text>
+<text x="60" y="190" dy="0" font-family="monospace" font-size="11" fill="#333" text-anchor="start" font-weight="normal">clicks</text>
+<rect x="300" y="50" width="200" height="30" fill="#8e44ad" stroke="none" stroke-width="1" rx="0" ry="0" opacity="1.0" />
+<text x="310" y="70" dy="0" font-family="Arial, sans-serif" font-size="14" fill="white" text-anchor="start" font-weight="bold">MARKETING_CAMPAIGN</text>
+<rect x="300" y="80" width="200" height="90" fill="#ecf0f1" stroke="#8e44ad" stroke-width="2" rx="0" ry="0" opacity="1.0" />
+<text x="310" y="100" dy="0" font-family="monospace" font-size="11" fill="#333" text-anchor="start" font-weight="normal">campaign_id (PK)</text>
+<text x="310" y="118" dy="0" font-family="monospace" font-size="11" fill="#333" text-anchor="start" font-weight="normal">campaign_name</text>
+<text x="310" y="136" dy="0" font-family="monospace" font-size="11" fill="#333" text-anchor="start" font-weight="normal">business_unit</text>
+<text x="310" y="154" dy="0" font-family="monospace" font-size="11" fill="#333" text-anchor="start" font-weight="normal">region</text>
+<text x="310" y="172" dy="0" font-family="monospace" font-size="11" fill="#333" text-anchor="start" font-weight="normal">product_line</text>
+<rect x="300" y="250" width="200" height="30" fill="#d35400" stroke="none" stroke-width="1" rx="0" ry="0" opacity="1.0" />
+<text x="310" y="270" dy="0" font-family="Arial, sans-serif" font-size="14" fill="white" text-anchor="start" font-weight="bold">OPPORTUNITY</text>
+<rect x="300" y="280" width="200" height="90" fill="#ecf0f1" stroke="#d35400" stroke-width="2" rx="0" ry="0" opacity="1.0" />
+<text x="310" y="300" dy="0" font-family="monospace" font-size="11" fill="#333" text-anchor="start" font-weight="normal">opp_id (PK)</text>
+<text x="310" y="318" dy="0" font-family="monospace" font-size="11" fill="#333" text-anchor="start" font-weight="normal">campaign_id (FK)</text>
+<text x="310" y="336" dy="0" font-family="monospace" font-size="11" fill="#333" text-anchor="start" font-weight="normal">created_date</text>
+<text x="310" y="354" dy="0" font-family="monospace" font-size="11" fill="#333" text-anchor="start" font-weight="normal">stage_name</text>
+<text x="310" y="372" dy="0" font-family="monospace" font-size="11" fill="#333" text-anchor="start" font-weight="normal">amount</text>
+<rect x="550" y="250" width="200" height="30" fill="#27ae60" stroke="none" stroke-width="1" rx="0" ry="0" opacity="1.0" />
+<text x="560" y="270" dy="0" font-family="Arial, sans-serif" font-size="14" fill="white" text-anchor="start" font-weight="bold">ACTUAL_FINANCIAL_RESULT</text>
+<rect x="550" y="280" width="200" height="90" fill="#ecf0f1" stroke="#27ae60" stroke-width="2" rx="0" ry="0" opacity="1.0" />
+<text x="560" y="300" dy="0" font-family="monospace" font-size="11" fill="#333" text-anchor="start" font-weight="normal">invoice_id (PK)</text>
+<text x="560" y="318" dy="0" font-family="monospace" font-size="11" fill="#333" text-anchor="start" font-weight="normal">opp_id (FK)</text>
+<text x="560" y="336" dy="0" font-family="monospace" font-size="11" fill="#333" text-anchor="start" font-weight="normal">posting_date</text>
+<text x="560" y="354" dy="0" font-family="monospace" font-size="11" fill="#333" text-anchor="start" font-weight="normal">gl_account</text>
+<text x="560" y="372" dy="0" font-family="monospace" font-size="11" fill="#333" text-anchor="start" font-weight="normal">revenue_amount</text>
+<line x1="250" y1="110" x2="300" y2="110" stroke="#555" stroke-width="2" stroke-dasharray="" />
+<text x="260" y="105" dy="0" font-family="Arial, sans-serif" font-size="10" fill="black" text-anchor="start" font-weight="normal">N:1</text>
+<line x1="400" y1="170" x2="400" y2="250" stroke="#555" stroke-width="2" stroke-dasharray="" />
+<text x="405" y="210" dy="0" font-family="Arial, sans-serif" font-size="10" fill="black" text-anchor="start" font-weight="normal">1:N</text>
+<line x1="500" y1="310" x2="550" y2="310" stroke="#555" stroke-width="2" stroke-dasharray="" />
+<text x="510" y="305" dy="0" font-family="Arial, sans-serif" font-size="10" fill="black" text-anchor="start" font-weight="normal">1:N</text>
+</svg>
