@@ -66,14 +66,19 @@ Traditional attribution fails because B2B sales cycles span 6-18 months and reve
 ├── cortex/
 │   └── mmm_semantic_model.yaml    # Cortex Analyst semantic model
 ├── data/
-│   └── synthetic/                  # Synthetic demo data
+│   ├── synthetic/                 # Synthetic demo data
+│   ├── ref_geography.csv          # Reference data
+│   ├── ref_marketing_channel.csv
+│   └── ref_product_category.csv
 ├── notebooks/
 │   └── 01_mmm_training.ipynb      # MMM training pipeline
 ├── sql/
 │   ├── 01_account_setup.sql       # Snowflake account configuration
 │   ├── 02_schema_setup.sql        # Database/schema creation
+│   ├── 03_dimensional_views.sql   # Dimensional views for analysis
 │   ├── 03_load_data.sql           # Data loading scripts
-│   └── 04_cortex_setup.sql        # Cortex AI configuration
+│   ├── 04_cortex_setup.sql        # Cortex AI configuration
+│   └── 05_fix_attribution.sql     # Attribution logic fixes
 ├── streamlit/
 │   ├── mmm_roi_app.py             # Home page (persona routing)
 │   ├── pages/
@@ -84,9 +89,12 @@ Traditional attribution fails because B2B sales cycles span 6-18 months and reve
 │   └── utils/
 │       ├── data_loader.py         # Parallel query execution
 │       ├── styling.py             # Brand CSS & theming
-│       └── cortex_analyst.py      # Cortex Analyst integration
-├── deploy.sh                       # Deployment script
-└── DRD.md                          # Design Requirements Document
+│       ├── cortex_analyst.py      # Cortex Analyst integration
+│       ├── map_viz.py             # Map visualization utilities
+│       └── explanations.py        # Text generation utilities
+├── deploy.sh                      # Deployment script
+├── run.sh                         # Runtime operations script
+└── DRD.md                         # Design Requirements Document
 ```
 
 ## Quick Start
@@ -98,12 +106,26 @@ Traditional attribution fails because B2B sales cycles span 6-18 months and reve
 snow sql -f sql/01_account_setup.sql
 snow sql -f sql/02_schema_setup.sql
 snow sql -f sql/03_load_data.sql
+snow sql -f sql/03_dimensional_views.sql
 snow sql -f sql/04_cortex_setup.sql
+snow sql -f sql/05_fix_attribution.sql
+```
+
+Alternatively, you can use the deployment script:
+```bash
+./deploy.sh
+# Note: You may need to manually run the additional SQL scripts if using deploy.sh
 ```
 
 ### 2. Train the MMM Model
 
-Open `notebooks/01_mmm_training.ipynb` in Snowflake Notebooks and run all cells. This will:
+You can run the notebook directly or use the helper script:
+
+```bash
+./run.sh main
+```
+
+Or open `notebooks/01_mmm_training.ipynb` in Snowflake Notebooks and run all cells. This will:
 - Load weekly marketing and revenue data
 - Apply Adstock and Saturation transformations
 - Optimize hyperparameters using Nevergrad
@@ -115,10 +137,9 @@ Open `notebooks/01_mmm_training.ipynb` in Snowflake Notebooks and run all cells.
 ./deploy.sh
 ```
 
-Or manually:
+To get the Streamlit app URL after deployment:
 ```bash
-cd streamlit
-snow streamlit deploy --replace
+./run.sh streamlit
 ```
 
 ## Key Features
