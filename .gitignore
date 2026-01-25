@@ -210,3 +210,7 @@ __marimo__/
 # Streamlit deployment output
 streamlit/output/
 workspace/
+
+# Local scratch files
+local/
+runner/
