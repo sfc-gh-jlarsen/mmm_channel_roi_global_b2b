@@ -38,8 +38,8 @@ inject_custom_css()
 def load_summary_stats(_session):
     """Load quick summary stats for the landing page."""
     queries = {
-        "ROI": "SELECT CHANNEL, TOTAL_SPEND, ATTRIBUTED_REVENUE, ROAS FROM MMM.V_ROI_BY_CHANNEL",
-        "CHANNELS": "SELECT COUNT(DISTINCT CHANNEL_CODE) as CNT FROM DIMENSIONAL.V_MMM_INPUT_WEEKLY"
+        "ROI": "SELECT CHANNEL, TOTAL_SPEND, ATTRIBUTED_REVENUE, ROAS FROM GLOBAL_B2B_MMM.MMM.V_ROI_BY_CHANNEL",
+        "CHANNELS": "SELECT COUNT(DISTINCT CHANNEL_CODE) as CNT FROM GLOBAL_B2B_MMM.DIMENSIONAL.V_MMM_INPUT_WEEKLY"
     }
     return run_queries_parallel(_session, queries)
 

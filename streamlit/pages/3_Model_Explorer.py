@@ -350,13 +350,23 @@ def render_diagnostics_tab(df_results: pd.DataFrame, df_weekly: pd.DataFrame):
                 type='data',
                 array=(df_sorted['ROI_CI_UPPER'] - df_sorted['ROI']).tolist(),
                 arrayminus=(df_sorted['ROI'] - df_sorted['ROI_CI_LOWER']).tolist(),
-                color='white',
-                thickness=3,
-                width=8
+                color='#444444',
+                thickness=2,
+                width=6
             ),
-            text=[f"{v:.2f}x" for v in df_sorted['ROI']],
-            textposition='outside',
             showlegend=False
+        ))
+        
+        # Add text labels separately so they render on top
+        fig_coeff.add_trace(go.Scatter(
+            x=df_sorted['ROI'],
+            y=df_sorted['CHANNEL'],
+            mode='text',
+            text=[f"{v:.2f}x" for v in df_sorted['ROI']],
+            textposition='middle right',
+            textfont=dict(color='#333333', size=11),
+            showlegend=False,
+            hoverinfo='skip'
         ))
         
         # Add invisible traces for legend
@@ -711,13 +721,12 @@ def render_curves_tab(df_curves: pd.DataFrame, df_results: pd.DataFrame):
                 
                 if narrative:
                     st.markdown(f"""
-                    <div style="background: linear-gradient(145deg, rgba(26, 31, 46, 0.8) 0%, rgba(37, 45, 61, 0.6) 100%);
-                                border: 1px solid rgba(41, 181, 232, 0.15); border-radius: 12px; padding: 1.25rem; margin: 1rem 0;">
+                    <div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 12px; padding: 1.25rem; margin: 1rem 0;">
                         <div style="display: flex; align-items: center; gap: 0.5rem; color: {COLOR_PRIMARY}; 
                                     font-weight: 600; font-size: 0.95rem; margin-bottom: 0.75rem;">
                             AI Analysis for {primary_channel}
                         </div>
-                        <div style="color: rgba(255, 255, 255, 0.85); font-size: 0.95rem; line-height: 1.6;">
+                        <div style="color: #212529; font-size: 0.95rem; line-height: 1.6;">
                             {narrative}
                         </div>
                     </div>
@@ -733,7 +742,7 @@ def render_curves_tab(df_curves: pd.DataFrame, df_results: pd.DataFrame):
                          "optimize carefully" if zone == "diminishing returns" else "consider reallocating budget"
                 
                 st.markdown(f"""
-                <div style="background: {BG_CARD}; border-radius: 12px; padding: 1rem; margin: 0.5rem 0;">
+                <div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 12px; padding: 1rem; margin: 0.5rem 0; color: #212529;">
                     <strong>{primary_channel}</strong> is currently in the <strong>{zone}</strong> zone 
                     with a marginal ROI of {primary_metrics.get('marginal_roi', 0):.2f}x. 
                     Based on current saturation ({primary_metrics.get('saturation_pct', 0):.0f}%), 
@@ -755,13 +764,12 @@ def render_curves_tab(df_curves: pd.DataFrame, df_results: pd.DataFrame):
                 
                 if comparative:
                     st.markdown(f"""
-                    <div style="background: linear-gradient(135deg, rgba(41, 181, 232, 0.1) 0%, rgba(17, 86, 127, 0.1) 100%);
-                                border: 1px solid {COLOR_PRIMARY}; border-radius: 12px; padding: 1.25rem; margin: 1rem 0;">
+                    <div style="background: #e7f5ff; border: 1px solid {COLOR_PRIMARY}; border-radius: 12px; padding: 1.25rem; margin: 1rem 0;">
                         <div style="display: flex; align-items: center; gap: 0.5rem; color: {COLOR_PRIMARY}; 
                                     font-weight: 600; font-size: 0.95rem; margin-bottom: 0.75rem;">
                             Budget Reallocation Recommendation
                         </div>
-                        <div style="color: rgba(255, 255, 255, 0.85); font-size: 0.95rem; line-height: 1.6;">
+                        <div style="color: #212529; font-size: 0.95rem; line-height: 1.6;">
                             {comparative}
                         </div>
                     </div>
@@ -1017,13 +1025,12 @@ def render_curves_tab(df_curves: pd.DataFrame, df_results: pd.DataFrame):
                         
                         if m_narrative:
                             st.markdown(f"""
-                            <div style="background: linear-gradient(145deg, rgba(26, 31, 46, 0.8) 0%, rgba(37, 45, 61, 0.6) 100%);
-                                        border: 1px solid rgba(41, 181, 232, 0.15); border-radius: 12px; padding: 1.25rem; margin: 1rem 0;">
+                            <div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 12px; padding: 1.25rem; margin: 1rem 0;">
                                 <div style="display: flex; align-items: center; gap: 0.5rem; color: {COLOR_PRIMARY}; 
                                             font-weight: 600; font-size: 0.95rem; margin-bottom: 0.75rem;">
                                     AI Budget Recommendation for {primary_channel}
                                 </div>
-                                <div style="color: rgba(255, 255, 255, 0.85); font-size: 0.95rem; line-height: 1.6;">
+                                <div style="color: #212529; font-size: 0.95rem; line-height: 1.6;">
                                     {m_narrative}
                                 </div>
                             </div>
@@ -1037,7 +1044,7 @@ def render_curves_tab(df_curves: pd.DataFrame, df_results: pd.DataFrame):
                               "maintain current levels" if primary_mmetrics.get('current_mroi', 0) >= 0.9 else \
                               "consider reducing spend"
                         st.markdown(f"""
-                        <div style="background: {BG_CARD}; border-radius: 12px; padding: 1rem; margin: 0.5rem 0;">
+                        <div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 12px; padding: 1rem; margin: 0.5rem 0; color: #212529;">
                             Based on marginal efficiency analysis, <strong>{primary_channel}</strong> 
                             has a current marginal ROI of {primary_mmetrics.get('current_mroi', 0):.2f}x. 
                             Recommendation: {rec}.

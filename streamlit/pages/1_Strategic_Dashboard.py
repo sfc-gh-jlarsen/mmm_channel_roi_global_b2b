@@ -64,13 +64,13 @@ inject_custom_css()
 def load_dashboard_data(_session):
     """Load all data needed for the executive dashboard including CI data."""
     # Import centralized queries from data_loader
-    from utils.data_loader import QUERIES
+    from utils.data_loader import QUERIES, DATABASE
     
     queries = {
         "ROI": QUERIES["ROI"],
         "WEEKLY": QUERIES["WEEKLY"],
         "RESULTS": QUERIES["RESULTS"],
-        "RESULTS_INTERPRETED": "SELECT * FROM MMM.V_MODEL_RESULTS_INTERPRETED",
+        "RESULTS_INTERPRETED": f"SELECT * FROM {DATABASE}.MMM.V_MODEL_RESULTS_INTERPRETED",
     }
     return run_queries_parallel(_session, queries)
 

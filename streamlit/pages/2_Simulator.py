@@ -16,10 +16,16 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import math
+import logging
 import plotly.graph_objects as go
 from snowflake.snowpark.context import get_active_session
 import sys
 from pathlib import Path
+
+DEPLOY_VERSION = "321D1792-4D99-4D0C-B1B0-727D83BE06CF"
+
+logger = logging.getLogger("snowflake.connector")
+logger.setLevel(logging.INFO)
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -61,17 +67,27 @@ st.set_page_config(
 inject_custom_css()
 
 
-@st.cache_data(ttl=3600)
+def log_event(session, event_type: str, message: str, details: dict = None):
+    """Log debug event to Snowflake event table."""
+    try:
+        import json
+        details_str = json.dumps(details) if details else "{}"
+        logger.info(f"[SIMULATOR][{DEPLOY_VERSION[:8]}] {event_type}: {message} | {details_str}")
+    except Exception as e:
+        pass
+
+
+@st.cache_data(ttl=60)
 def load_simulator_data(_session):
     """Load response curves and model results for simulation (with enhanced fields)."""
-    # Import centralized queries from data_loader
-    from utils.data_loader import QUERIES
+    from utils.data_loader import QUERIES, DATABASE
     
     queries = {
         "CURVES": QUERIES["CURVES"],
         "RESULTS": QUERIES["RESULTS"],
         "WEEKLY": QUERIES["WEEKLY"],
     }
+    
     return run_queries_parallel(_session, queries)
 
 
@@ -192,30 +208,49 @@ def calculate_efficiency_score(channel_impacts: list, channel_params: dict) -> d
 
 
 def main():
+    from utils.data_loader import QUERIES, DATABASE
+    
     # --- Session & Data ---
     try:
         session = get_active_session()
-    except Exception:
+        logger.info(f"[SIMULATOR][{DEPLOY_VERSION[:8]}] SESSION_INIT: Session acquired")
+    except Exception as e:
         st.error("Could not connect to Snowflake. Please ensure you're running in Snowflake.")
         return
+    
+    logger.info(f"[SIMULATOR][{DEPLOY_VERSION[:8]}] MAIN_START: version={DEPLOY_VERSION}, db={DATABASE}")
+    logger.info(f"[SIMULATOR][{DEPLOY_VERSION[:8]}] CURVES_QUERY: {QUERIES['CURVES']}")
+    
+    # Clear cache button for debugging
+    if st.sidebar.button("Clear Cache & Reload"):
+        st.cache_data.clear()
+        st.rerun()
     
     with st.spinner("Loading simulator data..."):
         data = load_simulator_data(session)
         df_curves = data.get("CURVES", pd.DataFrame())
         df_results = data.get("RESULTS", pd.DataFrame())
         df_weekly = data.get("WEEKLY", pd.DataFrame())
+    
+    logger.info(f"[SIMULATOR][{DEPLOY_VERSION[:8]}] DATA_LOADED: curves_empty={df_curves.empty}, curves_rows={len(df_curves)}, results_rows={len(df_results)}, weekly_rows={len(df_weekly)}")
+    
+    if not df_curves.empty:
+        logger.info(f"[SIMULATOR][{DEPLOY_VERSION[:8]}] CURVES_COLS: {list(df_curves.columns)}")
+        logger.info(f"[SIMULATOR][{DEPLOY_VERSION[:8]}] CURVES_SAMPLE: {df_curves.head(1).to_dict()}")
 
     # --- Header ---
-    st.markdown("""
+    st.markdown(f"""
     <div style="margin-bottom: 1.5rem;">
         <h1>Budget Allocation Simulator</h1>
         <p style="color: rgba(255,255,255,0.6); font-size: 1.1rem;">
             Model "what-if" scenarios to predict revenue impact with confidence intervals
         </p>
+        <p style="color: rgba(255,255,255,0.3); font-size: 0.7rem;">v{DEPLOY_VERSION[:8]} | curves={len(df_curves)}</p>
     </div>
     """, unsafe_allow_html=True)
 
     if df_curves.empty:
+        logger.info(f"[SIMULATOR][{DEPLOY_VERSION[:8]}] NO_CURVES: DataFrame is empty, showing warning")
         st.warning("No response curves found. Please run the MMM training pipeline first.")
         st.markdown(
             render_story_section(
