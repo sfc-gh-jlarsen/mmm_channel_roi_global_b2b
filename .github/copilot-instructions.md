@@ -64,6 +64,44 @@ from utils.styling import (
 )
 ```
 
+### Light Mode Requirements (CRITICAL)
+**This app is optimized for LIGHT MODE.** All custom HTML/CSS must be readable on light backgrounds.
+
+**DO NOT USE:**
+- `color: white` - invisible on light backgrounds
+- `color: rgba(255,255,255,...)` - invisible/hard to read
+- Hard-coded dark background colors in inline styles
+
+**ALWAYS USE** the constants from `utils/styling.py`:
+```python
+# Text colors for light mode
+TEXT_PRIMARY = "#1F2937"      # Main text (dark gray)
+TEXT_SECONDARY = "#6B7280"    # Secondary text (medium gray)
+TEXT_MUTED = "#9CA3AF"        # Muted/subtle text (light gray)
+
+# Brand colors (these work on light backgrounds)
+COLOR_PRIMARY = "#0068C9"     # Snowflake blue
+COLOR_SUCCESS = "#28A745"     # Green
+COLOR_WARNING = "#F39C12"     # Amber
+COLOR_DANGER = "#DC3545"      # Red
+```
+
+**For custom card styles**, use the CSS classes defined in `styling.py`:
+- `.priority-action-card` - For action/recommendation cards
+- `.recommendation-card` - For detailed recommendations
+- `.confidence-metric` - For metrics with confidence intervals
+- `.persona-card` - For persona selection UI
+
+**Example - WRONG vs RIGHT:**
+```python
+# WRONG - invisible text in light mode
+st.markdown('<p style="color: rgba(255,255,255,0.6);">Text</p>', unsafe_allow_html=True)
+
+# RIGHT - uses light-mode-safe colors
+from utils.styling import TEXT_SECONDARY
+st.markdown(f'<p style="color: {TEXT_SECONDARY};">Text</p>', unsafe_allow_html=True)
+```
+
 ### Session State Pattern
 For sliders with presets, update `st.session_state[f"slider_{channel}"]` BEFORE rendering, then `st.rerun()`:
 ```python

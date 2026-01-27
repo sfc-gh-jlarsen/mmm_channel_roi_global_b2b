@@ -42,14 +42,6 @@ from utils.styling import (
     COLOR_WARNING
 )
 from utils.explanations import get_explanation, render_explanation_expander
-from utils.map_viz import (
-    render_region_selector_map,
-    render_region_drill_down,
-    render_regional_summary_metrics,
-    aggregate_by_region,
-    extract_region_from_channel,
-    REGION_COORDS
-)
 
 # --- Page Config ---
 st.set_page_config(
@@ -60,7 +52,7 @@ st.set_page_config(
 inject_custom_css()
 
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=300)
 def load_dashboard_data(_session):
     """Load all data needed for the executive dashboard including CI data."""
     # Import centralized queries from data_loader
@@ -341,41 +333,8 @@ def main():
         exp = get_explanation("confidence_intervals")
         st.markdown(exp.get("content", ""), unsafe_allow_html=True)
 
-    # --- REGIONAL ROI MAP ---
-    st.markdown("### Regional Performance Overview")
-    st.markdown(
-        "<p style='color: rgba(255,255,255,0.6);'>Click a region to filter the dashboard</p>",
-        unsafe_allow_html=True
-    )
-    
-    # Regional map with selection
-    if not df_results.empty:
-        selected_region = render_region_selector_map(df_results, key_prefix="dashboard")
-        
-        # Show regional summary metrics
-        render_regional_summary_metrics(df_results, selected_region)
-        
-        # Regional drill-down cards
-        if selected_region:
-            render_region_drill_down(selected_region, df_results, key_prefix="dashboard_drill")
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        # Filter df_roi and df_results if a region is selected
-        if selected_region:
-            # Add region column for filtering
-            df_roi['Region'] = df_roi['CHANNEL'].apply(extract_region_from_channel)
-            df_roi = df_roi[df_roi['Region'] == selected_region]
-            
-            df_results_display = df_results.copy()
-            df_results_display['Region'] = df_results_display['CHANNEL'].apply(extract_region_from_channel)
-            df_results = df_results_display[df_results_display['Region'] == selected_region]
-    else:
-        selected_region = None
-
     # --- THE INSIGHT (Charts with CI) ---
-    region_label = f" ({REGION_COORDS.get(selected_region, {}).get('name', selected_region)})" if selected_region else ""
-    st.markdown(f"### Channel Attribution Analysis{region_label}")
+    st.markdown("### Channel Attribution Analysis")
     
     # Check if we have data to display after region filtering
     if df_roi.empty:
@@ -479,35 +438,32 @@ def main():
                 df_roas = df_roas[df_roas['ABOVE_THRESHOLD']]
         
         if not df_roas.empty:
-            # Color bars: green=profitable+reliable, red=unprofitable+reliable, orange=uncertain, gray=needs validation
+            # Color bars based on ROAS: green=profitable (>=1.0), red=unprofitable (<1.0), gray=low spend
             colors = []
-            patterns = []
-            for _, row in df_roas.iterrows():
-                needs_val = row.get('NEEDS_VALIDATION', False) or row.get('SPEND_PCT_OF_MAX', 100) < min_spend_pct
-                if needs_val:
-                    colors.append('#6B7280')  # Gray for low-spend channels
-                    patterns.append('/')
-                elif row.get('IS_SIGNIFICANT', True):
-                    colors.append(COLOR_SUCCESS if row['ROAS'] >= 1.0 else COLOR_DANGER)
-                    patterns.append('')
-                else:
-                    colors.append(COLOR_WARNING)
-                    patterns.append('')
-            
-            # Add spend indicator to labels for low-spend channels
             y_labels = []
-            for _, row in df_roas.iterrows():
+            for idx, row in df_roas.iterrows():
+                roas_val = row['ROAS']
+                spend_pct = row['SPEND_PCT_OF_MAX'] if pd.notna(row['SPEND_PCT_OF_MAX']) else 100.0
+                needs_val = row['NEEDS_VALIDATION'] if pd.notna(row['NEEDS_VALIDATION']) else False
+                is_low_spend = needs_val or spend_pct < min_spend_pct
+                
+                if is_low_spend:
+                    colors.append('#6B7280')  # Gray for low-spend channels
+                elif roas_val >= 1.0:
+                    colors.append('#28A745')  # Green for profitable
+                else:
+                    colors.append('#DC3545')  # Red for unprofitable
+                
                 label = row['CHANNEL']
-                spend_pct = row.get('SPEND_PCT_OF_MAX', 100)
                 if spend_pct < min_spend_pct:
-                    label += f" ⚠️"
+                    label += " ⚠️"
                 y_labels.append(label)
             
             fig_roas = go.Figure(go.Bar(
                 x=df_roas['ROAS'],
                 y=y_labels,
                 orientation='h',
-                marker_color=colors,
+                marker=dict(color=colors),
                 text=[f"{v:.2f}x" for v in df_roas['ROAS']],
                 textposition='outside',
                 textfont=dict(color='white'),
@@ -557,9 +513,8 @@ def main():
     # Legend for colors
     st.markdown(f"""
     <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; margin-top: -0.5rem; margin-bottom: 1rem; font-size: 0.85rem;">
-        <span><span style="color: #2ECC71; font-weight: bold;">■</span> Profitable (reliable)</span>
-        <span><span style="color: #E74C3C; font-weight: bold;">■</span> Below breakeven (reliable)</span>
-        <span><span style="color: #F39C12; font-weight: bold;">■</span> Uncertain (wide CI)</span>
+        <span><span style="color: {COLOR_SUCCESS}; font-weight: bold;">■</span> Profitable (ROAS ≥ 1.0x)</span>
+        <span><span style="color: {COLOR_DANGER}; font-weight: bold;">■</span> Below breakeven (ROAS &lt; 1.0x)</span>
         <span><span style="color: #6B7280; font-weight: bold;">■</span> Low spend - needs A/B test ⚠️</span>
     </div>
     """, unsafe_allow_html=True)
@@ -626,11 +581,7 @@ def main():
     if not df_weekly.empty:
         st.markdown("### Performance Trends")
         
-        # Filter by region if selected (if CHANNEL column exists in weekly data)
         df_weekly_filtered = df_weekly.copy()
-        if selected_region and 'CHANNEL' in df_weekly.columns:
-            df_weekly_filtered['Region'] = df_weekly_filtered['CHANNEL'].apply(extract_region_from_channel)
-            df_weekly_filtered = df_weekly_filtered[df_weekly_filtered['Region'] == selected_region]
         
         if not df_weekly_filtered.empty:
             df_trend = df_weekly_filtered.groupby('WEEK_START')[['SPEND', 'REVENUE']].sum().reset_index()
@@ -699,16 +650,13 @@ def main():
                     badge_color = COLOR_SUCCESS if row.get('IS_SIGNIFICANT', True) else COLOR_WARNING
                     spend_label = f"${row['CURRENT_SPEND']/1e6:.0f}M spend"
                     st.markdown(f"""
-                    <div style="background: rgba(41, 181, 232, 0.1); border: 1px solid rgba(41, 181, 232, 0.3); 
-                                border-radius: 12px; padding: 1rem; text-align: center;">
-                        <div style="font-size: 0.75rem; color: {badge_color}; margin-bottom: 0.5rem;">{badge}</div>
-                        <div style="font-weight: 600; color: white; margin-bottom: 0.25rem;">{row['CHANNEL']}</div>
-                        <div style="font-size: 1.5rem; color: {COLOR_PRIMARY}; font-weight: 700;">{row['MARGINAL_ROI']:.2f}x</div>
-                        <div style="font-size: 0.8rem; color: rgba(255,255,255,0.5);">Marginal ROI</div>
-                        <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4);">{spend_label}</div>
-                        <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7); margin-top: 0.5rem;">
-                            → Increase investment
-                        </div>
+                    <div class="priority-action-card">
+                        <div class="badge" style="color: {badge_color};">{badge}</div>
+                        <div class="channel-name">{row['CHANNEL']}</div>
+                        <div class="metric-value">{row['MARGINAL_ROI']:.2f}x</div>
+                        <div class="metric-label">Marginal ROI</div>
+                        <div class="spend-info">{spend_label}</div>
+                        <div class="action-text">→ Increase investment</div>
                     </div>
                     """, unsafe_allow_html=True)
 

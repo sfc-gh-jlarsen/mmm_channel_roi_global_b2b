@@ -49,14 +49,6 @@ from utils.styling import (
     BG_CARD
 )
 from utils.explanations import get_explanation
-from utils.map_viz import (
-    render_region_selector_map,
-    render_region_drill_down,
-    render_regional_summary_metrics,
-    aggregate_by_region,
-    extract_region_from_channel,
-    REGION_COORDS
-)
 
 # --- Page Config ---
 st.set_page_config(
@@ -77,7 +69,7 @@ def log_event(session, event_type: str, message: str, details: dict = None):
         pass
 
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=300)
 def load_simulator_data(_session):
     """Load response curves and model results for simulation (with enhanced fields)."""
     from utils.data_loader import QUERIES, DATABASE
@@ -262,23 +254,13 @@ def main():
         )
         return
 
-    # Process channels - extract region from channel names like "Facebook_NA_ALL"
-    # Region is the second-to-last segment (NA, EMEA, APAC, LATAM)
-    def extract_region(channel_name):
-        parts = channel_name.split('_')
-        if len(parts) >= 3:
-            return parts[-2]  # NA, EMEA, APAC, LATAM
-        elif len(parts) == 2:
-            return parts[-1]
-        return 'Global'
-    
+    # Process channels - extract base channel from names like "Facebook_GLOBAL_ALL"
     def extract_base_channel(channel_name):
         parts = channel_name.split('_')
         if len(parts) >= 2:
             return parts[0]  # Facebook, LinkedIn, Google Ads, Programmatic
         return channel_name
     
-    df_curves['Region'] = df_curves['CHANNEL'].apply(extract_region)
     df_curves['Base_Channel'] = df_curves['CHANNEL'].apply(extract_base_channel)
 
     # --- Scenario Context ---
@@ -291,37 +273,11 @@ def main():
         unsafe_allow_html=True
     )
 
-    # --- Regional Map Selection ---
-    st.markdown("### Select Region to Simulate")
-    st.markdown(
-        "<p style='color: rgba(255,255,255,0.6);'>Click a region to focus on its channels, or select All for the full portfolio</p>",
-        unsafe_allow_html=True
-    )
-    
-    # Use map for region selection if we have model results
-    if not df_results.empty:
-        selected_region = render_region_selector_map(df_results, key_prefix="simulator")
-        
-        # Show regional summary
-        render_regional_summary_metrics(df_results, selected_region)
-    else:
-        # Fallback to dropdown if no model results
-        all_regions = ['All Regions'] + sorted(df_curves['Region'].unique().tolist())
-        region_selection = st.selectbox("Filter by Region", all_regions, key="sim_region")
-        selected_region = None if region_selection == 'All Regions' else region_selection
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Filter data by region FIRST (needed for quick actions)
-    if selected_region:
-        df_filtered = df_curves[df_curves['Region'] == selected_region]
-    else:
-        df_filtered = df_curves
-    
-    channels = df_filtered['CHANNEL'].unique().tolist()
+    # Use all channels (no regional filtering since data is GLOBAL)
+    channels = df_curves['CHANNEL'].unique().tolist()
 
     if not channels:
-        st.info("No channels available for the selected region.")
+        st.info("No channels available.")
         return
 
     # Get model results for parameter display (needed for quick actions)
@@ -526,11 +482,6 @@ def main():
                 st.session_state[f"slider_{c}"] = min(current_val * 1.2, max_spend)
         
         st.rerun()
-
-    # Display region header if selected
-    if selected_region:
-        region_name = REGION_COORDS.get(selected_region, {}).get('full_name', selected_region)
-        st.markdown(f"<h4 style='color: {COLOR_PRIMARY};'>Simulating {region_name} Channels</h4>", unsafe_allow_html=True)
 
     # --- Main Layout ---
     col_sliders, col_results = st.columns([1, 2])

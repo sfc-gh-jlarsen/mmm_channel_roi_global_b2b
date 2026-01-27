@@ -622,6 +622,48 @@ def inject_custom_css():
         font-weight: 600;
         color: {TEXT_PRIMARY};
     }}
+    
+    /* ===== PRIORITY ACTION CARDS (LIGHT MODE) ===== */
+    .priority-action-card {{
+        background: rgba(0, 104, 201, 0.08);
+        border: 1px solid rgba(0, 104, 201, 0.25);
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+    }}
+    
+    .priority-action-card .badge {{
+        font-size: 0.75rem;
+        margin-bottom: 0.5rem;
+    }}
+    
+    .priority-action-card .channel-name {{
+        font-weight: 600;
+        color: {TEXT_PRIMARY};
+        margin-bottom: 0.25rem;
+    }}
+    
+    .priority-action-card .metric-value {{
+        font-size: 1.5rem;
+        color: {COLOR_PRIMARY};
+        font-weight: 700;
+    }}
+    
+    .priority-action-card .metric-label {{
+        font-size: 0.8rem;
+        color: {TEXT_SECONDARY};
+    }}
+    
+    .priority-action-card .spend-info {{
+        font-size: 0.75rem;
+        color: {TEXT_MUTED};
+    }}
+    
+    .priority-action-card .action-text {{
+        font-size: 0.9rem;
+        color: {TEXT_SECONDARY};
+        margin-top: 0.5rem;
+    }}
     </style>
     ''', unsafe_allow_html=True)
 
@@ -992,6 +1034,29 @@ def format_ci_string(value: float, ci_lower: float, ci_upper: float,
     Example: format_ci_string(2.3, 1.9, 2.7) -> "2.30x [1.90 - 2.70]"
     """
     return f"{prefix}{value:.{precision}f}{suffix} [{ci_lower:.{precision}f} - {ci_upper:.{precision}f}]"
+
+
+def render_priority_action_card(channel: str, marginal_roi: float, spend: float,
+                                 is_significant: bool = True) -> str:
+    """
+    Generate HTML for a priority action card (LIGHT MODE optimized).
+    
+    Use for displaying top recommended channels to invest in.
+    """
+    badge_text = "[High Confidence]" if is_significant else "[Uncertain]"
+    badge_color = COLOR_SUCCESS if is_significant else COLOR_WARNING
+    spend_label = f"${spend/1e6:.0f}M spend" if spend >= 1e6 else f"${spend/1e3:.0f}K spend"
+    
+    return f'''
+    <div class="priority-action-card">
+        <div class="badge" style="color: {badge_color};">{badge_text}</div>
+        <div class="channel-name">{channel}</div>
+        <div class="metric-value">{marginal_roi:.2f}x</div>
+        <div class="metric-label">Marginal ROI</div>
+        <div class="spend-info">{spend_label}</div>
+        <div class="action-text">→ Increase investment</div>
+    </div>
+    '''
 
 
 def calculate_confidence_level(ci_lower: float, ci_upper: float, 
