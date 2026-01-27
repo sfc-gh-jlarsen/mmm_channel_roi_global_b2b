@@ -6,7 +6,7 @@
 set -e
 set -o pipefail
 
-CONNECTION_NAME="demo"
+CONNECTION_NAME=""  # Empty = use snowcli default connection
 FORCE=false
 ENV_PREFIX=""
 
@@ -27,7 +27,7 @@ Usage: $0 [OPTIONS]
 Remove all project resources.
 
 Options:
-  -c, --connection NAME    Snowflake CLI connection
+  -c, --connection NAME    Snowflake CLI connection (default: snowcli default)
   -p, --prefix PREFIX      Environment prefix
   --force, -y              Skip confirmation
   -h, --help               Show help
@@ -45,7 +45,12 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-SNOW_CONN="-c $CONNECTION_NAME"
+# Build connection argument (empty if using default)
+if [ -n "$CONNECTION_NAME" ]; then
+    SNOW_CONN="-c $CONNECTION_NAME"
+else
+    SNOW_CONN=""
+fi
 
 if [ -n "$ENV_PREFIX" ]; then
     FULL_PREFIX="${ENV_PREFIX}_${PROJECT_PREFIX}"

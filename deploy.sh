@@ -21,7 +21,7 @@ set -e
 set -o pipefail
 
 # Configuration
-CONNECTION_NAME="demo"
+CONNECTION_NAME=""  # Empty = use snowcli default connection
 SKIP_NOTEBOOK=false
 ENV_PREFIX=""
 ONLY_COMPONENT=""
@@ -44,7 +44,7 @@ Usage: $0 [OPTIONS]
 Deploy the Global B2B MMM Demo project.
 
 Options:
-  -c, --connection NAME    Snowflake CLI connection name (default: demo)
+  -c, --connection NAME    Snowflake CLI connection name (default: snowcli default)
   -p, --prefix PREFIX      Environment prefix for resources (e.g., DEV, PROD)
   --skip-notebook          Skip notebook deployment
   --only-streamlit         Deploy only the Streamlit app
@@ -54,8 +54,8 @@ Options:
   -h, --help               Show this help message
 
 Examples:
-  $0                       # Full deployment
-  $0 -c prod               # Use 'prod' connection
+  $0                       # Full deployment (uses snowcli default connection)
+  $0 -c aws3               # Use 'aws3' connection
   $0 --prefix DEV          # Deploy with DEV_ prefix
 EOF
     exit 0
@@ -81,7 +81,12 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-SNOW_CONN="-c $CONNECTION_NAME"
+# Build connection argument (empty if using default)
+if [ -n "$CONNECTION_NAME" ]; then
+    SNOW_CONN="-c $CONNECTION_NAME"
+else
+    SNOW_CONN=""
+fi
 
 # Compute resource names
 if [ -n "$ENV_PREFIX" ]; then
@@ -104,7 +109,7 @@ echo "=================================================="
 echo "Global B2B MMM - Deployment"
 echo "=================================================="
 echo "Configuration:"
-echo "  Connection: $CONNECTION_NAME"
+echo "  Connection: ${CONNECTION_NAME:-<default>}"
 echo "  Prefix: ${ENV_PREFIX:-<none>}"
 echo "  Database: $DATABASE"
 echo "  Role: $ROLE"
@@ -178,6 +183,15 @@ if should_run_step "schema_sql"; then
         cat sql/04_cortex_setup.sql
     } | snow sql $SNOW_CONN -i
     echo -e "${GREEN}[OK]${NC} Schema setup complete"
+    
+    # Grant CREATE MODEL for Model Registry (requires ACCOUNTADMIN)
+    echo "Step 3b: Granting Model Registry privileges..."
+    snow sql $SNOW_CONN -q "
+        USE ROLE ACCOUNTADMIN;
+        GRANT CREATE MODEL ON SCHEMA ${DATABASE}.MMM TO ROLE ${ROLE};
+        GRANT CREATE MODEL ON SCHEMA ${DATABASE}.ATOMIC TO ROLE ${ROLE};
+    " 2>/dev/null || echo "  Note: CREATE MODEL grant may require manual ACCOUNTADMIN setup"
+    echo -e "${GREEN}[OK]${NC} Model Registry privileges configured"
 fi
 
 # Step 4: Upload Data
@@ -213,11 +227,11 @@ if should_run_step "load_data"; then
     echo -e "${GREEN}[OK]${NC} Data loaded"
 fi
 
-# Step 6: Deploy Notebook
+# Step 6: Deploy Notebooks
 if should_run_step "notebook" && [ "$SKIP_NOTEBOOK" = false ]; then
     echo "Step 6: Deploying Notebook..."
     
-    # Upload notebook files
+    # Upload notebook file
     snow sql $SNOW_CONN -q "
         USE ROLE ${ROLE};
         USE DATABASE ${DATABASE};
@@ -225,7 +239,7 @@ if should_run_step "notebook" && [ "$SKIP_NOTEBOOK" = false ]; then
         PUT file://notebooks/01_mmm_training.ipynb @MODELS_STAGE/notebooks/ AUTO_COMPRESS=FALSE OVERWRITE=TRUE;
     "
     
-    # Create notebook object
+    # Create notebook: MMM Training
     snow sql $SNOW_CONN -q "
         USE ROLE ${ROLE};
         USE DATABASE ${DATABASE};
@@ -238,11 +252,11 @@ if should_run_step "notebook" && [ "$SKIP_NOTEBOOK" = false ]; then
             COMPUTE_POOL = '${COMPUTE_POOL}'
             QUERY_WAREHOUSE = '${WAREHOUSE}'
             EXTERNAL_ACCESS_INTEGRATIONS = (PYPI_ACCESS_INTEGRATION)
-            COMMENT = 'MMM Training Notebook';
+            COMMENT = 'MMM Training Notebook - trains model and registers to Model Registry';
             
         ALTER NOTEBOOK MMM_TRAINING_NOTEBOOK ADD LIVE VERSION FROM LAST;
     "
-    echo -e "${GREEN}[OK]${NC} Notebook deployed"
+    echo -e "${GREEN}[OK]${NC} MMM Training Notebook deployed"
 fi
 
 # Step 7: Deploy Streamlit
