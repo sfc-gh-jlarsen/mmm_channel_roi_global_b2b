@@ -8,8 +8,11 @@ Users select their persona to navigate to the appropriate workflow.
 import streamlit as st
 import pandas as pd
 from snowflake.snowpark.context import get_active_session
+import logging
 import sys
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 # Add current directory to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -57,7 +60,8 @@ def main():
         total_rev = df_roi['ATTRIBUTED_REVENUE'].sum() if not df_roi.empty else 0
         num_channels = int(df_channels['CNT'].iloc[0]) if not df_channels.empty else 0
         has_data = True
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Failed to load summary stats: {e}")
         total_spend = 0
         total_rev = 0
         num_channels = 0

@@ -29,8 +29,7 @@ usage() {
 Usage: $0 [OPTIONS] COMMAND
 
 Commands:
-  main       Execute the MMM Training Notebook (01_mmm_training)
-  features   Execute the Snowflake ML Features Notebook (02_snowflake_ml_features)
+  main       Execute the MMM Training Notebook
   status     Check resource status
   streamlit  Get Streamlit App URL
 
@@ -52,7 +51,7 @@ while [[ $# -gt 0 ]]; do
         -h|--help) usage ;;
         -c|--connection) CONNECTION_NAME="$2"; shift 2 ;;
         -p|--prefix) ENV_PREFIX="$2"; shift 2 ;;
-        main|features|status|streamlit) COMMAND="$1"; shift ;;
+        main|status|streamlit) COMMAND="$1"; shift ;;
         *) error_exit "Unknown option: $1" ;;
     esac
 done
@@ -84,31 +83,19 @@ cmd_main() {
     echo "=================================================="
     
     echo "Triggering notebook execution..."
-    snow sql $SNOW_CONN -q "
+    if ! snow sql $SNOW_CONN -q "
         USE ROLE ${ROLE};
         USE DATABASE ${DATABASE};
         USE SCHEMA MMM;
         EXECUTE NOTEBOOK MMM_TRAINING_NOTEBOOK();
-    "
+    "; then
+        error_exit "Notebook execution failed"
+    fi
     
     echo -e "${GREEN}[OK]${NC} Notebook executed successfully."
 }
 
-cmd_features() {
-    echo "=================================================="
-    echo "Executing Snowflake ML Features Notebook"
-    echo "=================================================="
-    
-    echo "Triggering notebook execution..."
-    snow sql $SNOW_CONN -q "
-        USE ROLE ${ROLE};
-        USE DATABASE ${DATABASE};
-        USE SCHEMA MMM;
-        EXECUTE NOTEBOOK SNOWFLAKE_ML_FEATURES_NOTEBOOK();
-    "
-    
-    echo -e "${GREEN}[OK]${NC} Notebook executed successfully."
-}
+
 
 cmd_status() {
     echo "=================================================="
@@ -154,7 +141,6 @@ cmd_streamlit() {
 
 case $COMMAND in
     main) cmd_main ;;
-    features) cmd_features ;;
     status) cmd_status ;;
     streamlit) cmd_streamlit ;;
     *) error_exit "Unknown command" ;;

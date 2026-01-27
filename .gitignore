@@ -209,6 +209,7 @@ __marimo__/
 
 # Streamlit deployment output
 streamlit/output/
+problem_statement_app/output/
 workspace/
 
 # Local scratch files

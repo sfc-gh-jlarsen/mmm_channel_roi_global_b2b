@@ -59,7 +59,7 @@ st.set_page_config(
 inject_custom_css()
 
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=300)
 def load_explorer_data(_session):
     """Load all data for model exploration including enhanced fields."""
     # Import centralized queries from data_loader
@@ -1122,11 +1122,10 @@ def main():
         """, unsafe_allow_html=True)
 
     # --- Tabs ---
-    tab_diag, tab_eda, tab_curves, tab_analyst = st.tabs([
+    tab_diag, tab_eda, tab_curves = st.tabs([
         "Model Diagnostics",
         "Exploratory Analysis",
-        "Response Curves",
-        "Cortex Analyst"
+        "Response Curves"
     ])
     
     with tab_diag:
@@ -1137,9 +1136,6 @@ def main():
     
     with tab_curves:
         render_curves_tab(df_curves, df_results)
-    
-    with tab_analyst:
-        render_analyst_tab(session)
 
     # --- Navigation ---
     st.markdown("<br>", unsafe_allow_html=True)

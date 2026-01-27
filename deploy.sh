@@ -229,18 +229,17 @@ fi
 
 # Step 6: Deploy Notebooks
 if should_run_step "notebook" && [ "$SKIP_NOTEBOOK" = false ]; then
-    echo "Step 6: Deploying Notebooks..."
+    echo "Step 6: Deploying Notebook..."
     
-    # Upload notebook files
+    # Upload notebook file
     snow sql $SNOW_CONN -q "
         USE ROLE ${ROLE};
         USE DATABASE ${DATABASE};
         USE SCHEMA ATOMIC;
         PUT file://notebooks/01_mmm_training.ipynb @MODELS_STAGE/notebooks/ AUTO_COMPRESS=FALSE OVERWRITE=TRUE;
-        PUT file://notebooks/02_snowflake_ml_features.ipynb @MODELS_STAGE/notebooks/ AUTO_COMPRESS=FALSE OVERWRITE=TRUE;
     "
     
-    # Create notebook 1: MMM Training
+    # Create notebook: MMM Training
     snow sql $SNOW_CONN -q "
         USE ROLE ${ROLE};
         USE DATABASE ${DATABASE};
@@ -257,26 +256,7 @@ if should_run_step "notebook" && [ "$SKIP_NOTEBOOK" = false ]; then
             
         ALTER NOTEBOOK MMM_TRAINING_NOTEBOOK ADD LIVE VERSION FROM LAST;
     "
-    echo -e "${GREEN}[OK]${NC} Notebook 1 (MMM Training) deployed"
-    
-    # Create notebook 2: Snowflake ML Features
-    snow sql $SNOW_CONN -q "
-        USE ROLE ${ROLE};
-        USE DATABASE ${DATABASE};
-        USE SCHEMA MMM;
-        
-        CREATE OR REPLACE NOTEBOOK SNOWFLAKE_ML_FEATURES_NOTEBOOK
-            FROM '@ATOMIC.MODELS_STAGE/notebooks/'
-            MAIN_FILE = '02_snowflake_ml_features.ipynb'
-            RUNTIME_NAME = 'SYSTEM\$BASIC_RUNTIME'
-            COMPUTE_POOL = '${COMPUTE_POOL}'
-            QUERY_WAREHOUSE = '${WAREHOUSE}'
-            EXTERNAL_ACCESS_INTEGRATIONS = (PYPI_ACCESS_INTEGRATION)
-            COMMENT = 'Snowflake ML Features - SQL features, FORECAST baseline, Feature Store guidance';
-            
-        ALTER NOTEBOOK SNOWFLAKE_ML_FEATURES_NOTEBOOK ADD LIVE VERSION FROM LAST;
-    "
-    echo -e "${GREEN}[OK]${NC} Notebook 2 (Snowflake ML Features) deployed"
+    echo -e "${GREEN}[OK]${NC} MMM Training Notebook deployed"
 fi
 
 # Step 7: Deploy Streamlit
