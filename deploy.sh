@@ -114,6 +114,7 @@ echo "  Prefix: ${ENV_PREFIX:-<none>}"
 echo "  Database: $DATABASE"
 echo "  Role: $ROLE"
 echo "  Warehouse: $WAREHOUSE"
+echo "  Compute Pool: $COMPUTE_POOL"
 echo ""
 
 should_run_step() {
@@ -261,33 +262,106 @@ fi
 
 # Step 7: Deploy Streamlit
 if should_run_step "streamlit"; then
-    echo "Step 7: Deploying Streamlit app..."
+    echo "Step 7: Deploying Streamlit app on Container Runtime..."
     
-    # Clean up previous
+    # First, upload the app files to stage
+    echo "  Uploading Streamlit files to stage..."
     snow sql $SNOW_CONN -q "
         USE ROLE ${ROLE};
         USE DATABASE ${DATABASE};
         USE SCHEMA MMM;
+        CREATE STAGE IF NOT EXISTS STREAMLIT_STAGE;
+    "
+    
+    # Upload all Streamlit files
+    snow sql $SNOW_CONN -q "
+        USE ROLE ${ROLE};
+        USE DATABASE ${DATABASE};
+        USE SCHEMA MMM;
+        PUT file://streamlit/mmm_roi_app.py @STREAMLIT_STAGE/mmm_roi_app/ AUTO_COMPRESS=FALSE OVERWRITE=TRUE;
+        PUT file://streamlit/requirements.txt @STREAMLIT_STAGE/mmm_roi_app/ AUTO_COMPRESS=FALSE OVERWRITE=TRUE;
+    "
+    
+    # Upload pages and utils directories
+    for file in streamlit/pages/*.py; do
+        snow sql $SNOW_CONN -q "
+            USE ROLE ${ROLE};
+            USE DATABASE ${DATABASE};
+            USE SCHEMA MMM;
+            PUT file://$file @STREAMLIT_STAGE/mmm_roi_app/pages/ AUTO_COMPRESS=FALSE OVERWRITE=TRUE;
+        "
+    done
+    
+    for file in streamlit/utils/*.py; do
+        snow sql $SNOW_CONN -q "
+            USE ROLE ${ROLE};
+            USE DATABASE ${DATABASE};
+            USE SCHEMA MMM;
+            PUT file://$file @STREAMLIT_STAGE/mmm_roi_app/utils/ AUTO_COMPRESS=FALSE OVERWRITE=TRUE;
+        "
+    done
+    
+    # Create Streamlit app with Container Runtime
+    echo "  Creating Streamlit app with Container Runtime..."
+    snow sql $SNOW_CONN -q "
+        USE ROLE ${ROLE};
+        USE DATABASE ${DATABASE};
+        USE SCHEMA MMM;
+        
         DROP STREAMLIT IF EXISTS MMM_ROI_APP;
-    " 2>/dev/null || true
+        
+        CREATE STREAMLIT MMM_ROI_APP
+            FROM '@STREAMLIT_STAGE/mmm_roi_app/'
+            MAIN_FILE = 'mmm_roi_app.py'
+            RUNTIME_NAME = 'SYSTEM\$ST_CONTAINER_RUNTIME_PY3_11'
+            COMPUTE_POOL = ${COMPUTE_POOL}
+            QUERY_WAREHOUSE = ${WAREHOUSE}
+            EXTERNAL_ACCESS_INTEGRATIONS = (PYPI_ACCESS_INTEGRATION)
+            COMMENT = 'Global B2B MMM ROI Engine - Marketing Mix Model Analysis';
+    "
     
-    cd streamlit
-    snow streamlit deploy \
-        $SNOW_CONN \
-        --database $DATABASE \
-        --schema MMM \
-        --role $ROLE \
-        --warehouse $WAREHOUSE \
-        --replace
-    cd ..
-    
-    echo -e "${GREEN}[OK]${NC} Streamlit app deployed"
+    echo -e "${GREEN}[OK]${NC} Streamlit app deployed on Container Runtime"
 fi
 
 echo ""
 echo "=================================================="
 echo -e "${GREEN}Deployment Complete!${NC}"
 echo "=================================================="
+echo ""
+echo "--- Deployment Summary ---"
+if [ -z "$ONLY_COMPONENT" ]; then
+    echo "Roles: ${ROLE}"
+    echo "Warehouses: ${WAREHOUSE}"
+    echo "Databases: ${DATABASE}"
+    echo "Compute Pools: ${COMPUTE_POOL}"
+    echo "Schemas: 4 (RAW, ATOMIC, MMM, DIMENSIONAL)"
+    echo "Tables: 17"
+    echo "Views: 11"
+    echo "Stages: 3"
+    echo "Streamlit Apps: 1"
+    echo "Notebooks: 1"
+else
+    case "$ONLY_COMPONENT" in
+        sql)
+            echo "Roles: ${ROLE}"
+            echo "Warehouses: ${WAREHOUSE}"
+            echo "Databases: ${DATABASE}"
+            echo "Compute Pools: ${COMPUTE_POOL}"
+            echo "Schemas: 4"
+            echo "Tables: 17"
+            echo "Views: 11"
+            ;;
+        data)
+            echo "Data files uploaded and loaded"
+            ;;
+        notebook)
+            echo "Notebooks: 1"
+            ;;
+        streamlit)
+            echo "Streamlit Apps: 1"
+            ;;
+    esac
+fi
 echo ""
 echo "Next Steps:"
 echo "  1. Run the Notebook to train the model:"
